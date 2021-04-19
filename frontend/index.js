@@ -136,8 +136,9 @@ async function sendPostcards(base, value) {
     
             let qrcode = await QRCode.toDataURL(qrUrl, { width: 125 });
     
-            let querystring = "description=PostCard: " + name.toString() +
-                "&to[name]=" + name.toString() +
+            let querystring = "description=Offer " + offerID + " for " + toAddressStreet + 
+                "&to[name]=" + name.toString() + 
+                "&to[company]=Or Current Homeowner" + 
                 "&to[address_line1]=" + toAddressStreet +
                 "&to[address_city]=" + toAddressCity +
                 "&to[address_state]=" + toAddressState +
@@ -177,3 +178,15 @@ async function sendPostcards(base, value) {
 }
 
 initializeBlock(() => <PrintRecordsApp />);
+
+// live
+// lob_api=live_be5502e9ce398c401571b0509087ab73074
+// front=tmpl_e9715b10218c749
+// back=tmpl_0e5ac29cb5941ab
+// blockId=blk69Ax3ux4ebjIWc
+
+// test
+// lob_api=test_56e33dc6f0b6591e4d11aeb5bf654ef8103
+// front=tmpl_ac4141547048dd4
+// back=tmpl_8147056a41adbfa
+// blockId=blkPrB3vf2OOpxnQV
