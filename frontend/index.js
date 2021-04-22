@@ -34,12 +34,14 @@ function PrintRecordsApp() {
 }
 
 // The toolbar contains the view picker and print button.
-function Toolbar({base, value}) {
+function Toolbar({base, value, statusValue}) {
     return (
         <Box className="print-hide">
             <Button
                 onClick={() => {
-                    sendPostcards(base, value);
+                    if (statusValue) {
+                        sendPostcards(base, value, statusValue);
+                    }
                 }}
                 marginLeft={2}
             >
@@ -60,8 +62,10 @@ const groupBy = (xs, key) => {
 // of its linked Artists records.
 function Record() {
     const base = useBase();
-    const [value, setValue] = useState(null)
+    const [value, setValue] = useState(null);
+    const [statusValue, setStatusValue] = useState(null);
     const [batchNames, setBatchNames] = useState([]);
+    const [statusList, setStatusList] = useState([]);
     let table = base.getTable('tblgt5UJCr2ML9SML');
 
     useEffect(() => {
@@ -82,6 +86,27 @@ function Record() {
         fetch();
     }, []);
 
+    useEffect(() => {
+        if (value) {
+            const fetch = async () => {
+                let result = await table.selectRecordsAsync();
+                let batchResult = result.records.filter(record => record.getCellValue("fldq36xuFwFZ4S865").name === value);
+                let statusL = [];
+                for (let record of batchResult) {
+                    if (statusL.findIndex(element => element.value === record.getCellValue("fldlTfyRV3B2uycRj").name) === -1) {
+                        statusL.push({
+                            value: record.getCellValue("fldlTfyRV3B2uycRj").name,
+                            label: record.getCellValue("fldlTfyRV3B2uycRj").name,
+                        })
+                    }
+                }
+                setStatusValue(statusL[0].value);
+                setStatusList([...statusL]);
+            }
+            fetch();
+        }
+    }, [value]);
+
     return (
         <Box marginY={3} display="flex" alignItems="center" justifyContent="center">
             <Select
@@ -89,9 +114,18 @@ function Record() {
                 value={value}
                 onChange={newValue => setValue(newValue)}
                 size="large"
-                width="320px"
+                width="200px"
+                marginRight="20px"
             />
-            <Toolbar base={base} value={value} />
+            <Select
+                options={statusList}
+                value={statusValue}
+                onChange={newValue => setStatusValue(newValue)}
+                size="large"
+                width="200px"
+                marginRight="10px"
+            />
+            <Toolbar base={base} value={value} statusValue={statusValue} />
         </Box>
     );
 }
@@ -105,16 +139,18 @@ function kFormatter(n) {
     return "$" + (Math.abs(num) > 999 ? Math.sign(num)*((Math.abs(num)/1000).toFixed(1)) + 'k' : Math.sign(num)*Math.abs(num));
 }
 
-async function sendPostcards(base, value) {
+async function sendPostcards(base, value, statusValue) {
     // replace with your own Lob API key below
-    let APIkey = btoa("test_56e33dc6f0b6591e4d11aeb5bf654ef8103" + ":");
+    let APIkey = btoa("live_be5502e9ce398c401571b0509087ab73074" + ":");
 
     // tblDa0oSV1l17Gqhz is the Mail List table
     let table = base.getTable('tblgt5UJCr2ML9SML');
 
     let result = await table.selectRecordsAsync();
     for (let record of result.records) {
-        if (value === record.getCellValue("fldq36xuFwFZ4S865").name) {
+        if (value === record.getCellValue("fldq36xuFwFZ4S865").name && 
+            statusValue === record.getCellValue("fldlTfyRV3B2uycRj").name
+        ) {
             let name = encodeURIComponent(record.getCellValue("fldi38sRoDU3QXVCx"));
             let toAddressStreet = record.getCellValue("fldSoT5FCEDPW03Mx");
             let toAddressCity = record.getCellValue("fldJQObJCqkVfnTsp");
@@ -123,7 +159,7 @@ async function sendPostcards(base, value) {
     
             let qrUrl = record.getCellValue("fldblMXp0r1WTLSwH");
             let offerID = record.getCellValue("fldEnAD5wSzqty8YB");
-            let offerExpiration = moment(new Date(record.getCellValue("fld8frQGt5FajvZyz"))).format("MMM d, YYYY");
+            let offerExpiration = moment(new Date(record.getCellValue("fld8frQGt5FajvZyz"))).add(1, "days").format("MMM DD, YYYY");
     
             let offerPrice = format(record.getCellValue("fldnHMu6K9OS42vJV"));
             let rentalPrice = format(record.getCellValue("fld9itYfbH6k7jJB9"));
@@ -148,8 +184,8 @@ async function sendPostcards(base, value) {
                 "&from[address_city]=NASHVILLE" + 
                 "&from[address_state]=TN" + 
                 "&from[address_zip]=37219-1782" + 
-                "&front=tmpl_ac4141547048dd4" + 
-                "&back=tmpl_8147056a41adbfa" + // you will need to insert your own Lob template ID here.
+                "&front=tmpl_e9715b10218c749" + 
+                "&back=tmpl_0e5ac29cb5941ab" + // you will need to insert your own Lob template ID here.
                 "&size=6x11" + 
                 "&merge_variables[offerID]=" + offerID + 
                 "&merge_variables[offerExpiration]=" + offerExpiration + 
